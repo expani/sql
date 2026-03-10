@@ -40,7 +40,6 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.fun.SqlLibraryOperators;
@@ -77,22 +76,15 @@ import org.opensearch.sql.calcite.utils.OpenSearchTypeFactory;
 import org.opensearch.sql.executor.OpenSearchTypeSystem;
 import org.opensearch.sql.expression.function.BuiltinFunctionName;
 import org.opensearch.sql.expression.function.PPLBuiltinOperators;
-import org.opensearch.sql.expression.function.udf.datetime.ExtractFunction;
 import org.opensearch.sql.opensearch.client.OpenSearchClient;
 import org.opensearch.sql.opensearch.data.value.OpenSearchExprValueFactory;
 import org.opensearch.sql.opensearch.response.OpenSearchResponse;
 import org.opensearch.sql.opensearch.storage.OpenSearchIndex;
 import org.opensearch.sql.opensearch.storage.OpenSearchStorageEngine;
-import org.opensearch.sql.opensearch.storage.scan.CalciteLogicalIndexScan;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -460,7 +452,7 @@ public class OpenSearchQueryRequest implements OpenSearchRequest {
   }
 
     public static byte[] convertToSubstraitAndSerialize(RelNode relNode) {
-        LOGGER.debug("Calcite Logical Plan before Conversion\n {}", RelOptUtil.toString(relNode));
+        LOGGER.info("Calcite Logical Plan before Conversion\n {}", RelOptUtil.toString(relNode));
 
         // Preprocess the Calcite plan
         relNode = preprocessRelNodes(relNode);
@@ -471,7 +463,7 @@ public class OpenSearchQueryRequest implements OpenSearchRequest {
         // Support to convert COUNT(DISTINCT) to APPROX_COUNT_DISTINCT for partial results
         relNode = convertCountDistinctToApprox(relNode);
 
-        LOGGER.debug("Calcite Logical Plan after Conversion\n {}", RelOptUtil.toString(relNode));
+        LOGGER.info("Calcite Logical Plan after Conversion\n {}", RelOptUtil.toString(relNode));
 
         long startTimeSubstrait = System.nanoTime();
         // Substrait conversion
@@ -511,7 +503,8 @@ public class OpenSearchQueryRequest implements OpenSearchRequest {
         PlanProtoConverter planProtoConverter = new PlanProtoConverter();
         io.substrait.proto.Plan substraitPlanProtoModified = planProtoConverter.toProto(modifiedPlan);
         LOGGER.debug("Time taken to convert to Substrait convert (ms) {}", (endTimeSubstraitConvert-startTimeSubstrait)/1000000);
-        LOGGER.debug("Substrait Logical Plan \n {}", substraitPlanProtoModified.toString());
+        LOGGER.info("Substrait Logical Plan \n {}", substraitPlanProtoModified.toString());
+
         return substraitPlanProtoModified.toByteArray();
     }
 
